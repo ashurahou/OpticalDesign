@@ -41,9 +41,12 @@
 %   6) Surf plot with basins of attractions + contour plot of meritfunction
 %   without optimization + indication of equal MF value line
 % 
-%   
-%
-%
+% Data in the workspace
+%   ERFopt; % basins of attraction with one execution of optimization macro
+%   ERFopt_two; % basins of attraction with two executions of optimization macr
+%   ERF; % merit function value without optimization
+%   ERFlineX; % line data in the xp direction without optimization
+%   ERFlineY; % line data in the yp direction without optimization
 %
 %
 % 
@@ -136,22 +139,8 @@ CVstart; % start connection with CODEV
 
 CurRef = varRefValue(reftag);
 
-%% Plot 2D variation
+%% Plot basins of attraction in the 2D-hyperplace
 
-% % MODE 1, scan around a point
-% p = 0.2;
-% t = 11;  % use an odd number so that the original system sits at the center of the square
-% tempArrayA = linspace(varRefValue(1)*(1-p),varRefValue(1),t);
-% tempArrayB = linspace(varRefValue(1)*(1+p),varRefValue(1),t);
-% dim = 2*t-1;
-% 
-% if varRefValue(1) > 0
-%     x = [tempArrayA,fliplr(tempArrayB(1:end-1))];
-% else
-%     x = [tempArrayB,fliplr(tempArrayA(1:end-1))];
-% end
-
-% MODE 2, scan in a designated area
 dim = In_dim;                       
 bound_down = In_bound_down;               
 bound_up = In_bound_up;                    
@@ -165,14 +154,14 @@ colonArray=colon(ones(sum(varIndex,1),1),:);
 whiteSpace=' ';
 whiteSpaceArray=whiteSpace(ones(sum(varIndex,1),1),:);
 
-ERFopt = zeros(dim,dim);
-ERFopt_two = zeros(dim,dim);
+ERFopt = zeros(dim,dim); % basins of attraction with one execution of optimization macro
+ERFopt_two = zeros(dim,dim); % basins of attraction with two executions of optimization macro
 
-CVcomm(CVS,'SAV temp.len');
+CVcomm(CVS,'SAV temp.len'); % create a temp file to later restore
 for m = 1:dim
     for n = 1:dim      
         CVcomm(CVS, 'RES temp');
-
+        % compute the curvature values in the 2D-hyper plane
         c1 = CurRef + XP(m,n)/sqrt(2) + YP(m,n)/sqrt(6);
         c2 = CurRef + YP(m,n)*sqrt(2/3);
         c3 = CurRef - XP(m,n)/sqrt(2) + YP(m,n)/sqrt(6);
@@ -213,8 +202,8 @@ figure;
 surf(XP,YP,ERFopt_two);
 xlabel('X');ylabel('Y');zlabel('Optimized MF value');title('Basin of attractions (two optimization clicks)');colorbar;
 
-
-ERF = zeros(dim,dim);
+%% plot the meritfunction landscape without optimization
+ERF = zeros(dim,dim); % merit function value without optimization
 for m = 1:dim
     for n = 1:dim      
         CVcomm(CVS, 'RES temp');
@@ -251,25 +240,8 @@ figure;
 [C,ct] = contour(XP,YP,ERF,100);
 clabel(C,ct,'Color','black');
 xlabel('X');ylabel('Y');zlabel('MF value');title('MF landscape (without optimization)');colorbar;
-%% Plot line variation
+%% Plot line data variation without optimization
 
-% % MODE 1, scan around a point
-% line_p = 0.2;
-% line_t = 21;
-% tempArrayA = linspace(varRefValue(1)*(1-line_p),varRefValue(1),line_t);
-% tempArrayB = linspace(varRefValue(1)*(1+line_p),varRefValue(1),line_t);
-% line_dim = 2*line_t-1;
-% 
-% if varRefValue(1) > 0
-%     x = [tempArrayA,fliplr(tempArrayB(1:end-1))];
-% else
-%     x = [tempArrayB,fliplr(tempArrayA(1:end-1))];
-% end
-
-% MODE 2, scan on a designated line
-% p1 = -0.1702;
-% p2 = -0.165;
-% p3 = -0.12;
 line_dim = dim;   
 xp = linspace(bound_down,bound_up,line_dim);
 yp = xp;
@@ -279,8 +251,7 @@ colonArray=colon(ones(sum(varIndex,1),1),:);
 whiteSpace=' ';
 whiteSpaceArray=whiteSpace(ones(sum(varIndex,1),1),:);
 
-ERFlineX = zeros(line_dim,1);
-
+ERFlineX = zeros(line_dim,1); % line data in the xp direction without optimization
 
 for m = 1:line_dim      
     CVcomm(CVS, 'RES temp');
@@ -315,13 +286,9 @@ figure;
 plot(xp,ERFlineX,'DisplayName','along the X line');
 xlabel('X');ylabel('MF value');title('MF landscape (without optimization)');
 
+% plot along the acending and decending lines
 
-
-%% plot along the acending and decending lines
-
-
-
-ERFlineY = zeros(line_dim,1);
+ERFlineY = zeros(line_dim,1); %line data in the yp direction without optimization
 for m = 1:line_dim    
     CVcomm(CVS, 'RES temp');
     
@@ -357,7 +324,6 @@ plot(xp,ERFlineY,'DisplayName','along the Y line');
 legend('show');
 
 %% Plot a overlay with equal-MF line, double optimized results and contour profile without optimization
-
 
 figure;
 h = surf(XP,YP,ERFopt_two);
